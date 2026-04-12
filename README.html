@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>盲水印工具 - 使用说明</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #764ba2;
+            margin-top: 30px;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .tip {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 盲水印工具 - 使用说明</h1>
+        
+        <h2>📖 软件简介</h2>
+        <p>本工具是一款基于Web的盲水印添加与验证工具，采用LSB（最低有效位）算法，将水印信息嵌入到图片像素的最低位，实现人眼不可见的数字水印。</p>
+        
+        <h2>✨ 主要功能</h2>
+        <ul>
+            <li>✅ 批量添加盲水印</li>
+            <li>✅ 批量验证盲水印</li>
+            <li>✅ 支持中文水印内容</li>
+            <li>✅ 支持长文本自动换行</li>
+            <li>✅ 无损PNG格式保存</li>
+            <li>✅ 可视化处理结果</li>
+        </ul>
+        
+        <h2>🚀 快速开始</h2>
+        
+        <div class="step">
+            <strong>步骤1：启动程序</strong><br>
+            双击运行 <code>start_server.bat</code>，或直接双击 <code>index.html</code>
+        </div>
+        
+        <div class="step">
+            <strong>步骤2：上传图片</strong><br>
+            点击上传区域，选择需要处理的图片（支持批量选择），或直接拖拽图片到上传区域
+        </div>
+        
+        <div class="step">
+            <strong>步骤3：输入水印内容</strong><br>
+            在右侧文本框中输入要添加的水印内容（支持中文、英文、数字）
+        </div>
+        
+        <div class="step">
+            <strong>步骤4：执行操作</strong><br>
+            • <strong>添加水印</strong>：为所有上传的图片添加盲水印<br>
+            • <strong>验证水印</strong>：检测图片中是否包含本工具添加的水印
+        </div>
+        
+        <div class="step">
+            <strong>步骤5：下载结果</strong><br>
+            处理完成后，点击结果中的"点击下载"链接保存图片
+        </div>
+        
+        <h2>📁 文件说明</h2>
+        <ul>
+            <li><code>index.html</code> - 主程序界面</li>
+            <li><code>start_server.bat</code> - 启动Web服务器脚本</li>
+            <li><code>icon.svg</code> - 程序图标</li>
+            <li><code>README.html</code> - 使用说明（本文件）</li>
+        </ul>
+        
+        <div class="tip">
+            <strong>💡 使用提示</strong><br>
+            • 建议使用最新版Chrome、Edge或Firefox浏览器<br>
+            • 输出文件为PNG格式，请勿转换格式以免水印丢失<br>
+            • 批量处理时请耐心等待，处理时间与图片数量和水印长度有关
+        </div>
+        
+        <div class="note">
+            <strong>⚠️ 注意事项</strong><br>
+            • 水印嵌入后请勿对图片进行压缩、格式转换或截图<br>
+            • 图片尺寸越大，可嵌入的水印内容越多<br>
+            • 本工具只能检测本工具添加的水印<br>
+            • 所有处理在浏览器本地完成，图片不会上传到服务器
+        </div>
+        
+        <h2>❓ 常见问题</h2>
+        <p><strong>Q: 为什么验证时提示没有水印？</strong><br>
+        A: 请确保验证的图片是本工具添加水印后保存的PNG文件，且未被修改。</p>
+        
+        <p><strong>Q: 可以添加多长的水印？</strong><br>
+        A: 取决于图片尺寸。512x512的图片约可存储8000个字符。</p>
+        
+        <p><strong>Q: 批量处理支持多少张图片？</strong><br>
+        A: 理论上无限制，但建议单次不超过50张，避免浏览器卡顿。</p>
+        
+        <p><strong>Q: 水印会被别人提取吗？</strong><br>
+        A: 本工具使用公开的LSB算法，懂技术的人可以提取。如需高安全性，建议使用专业软件。</p>
+        
+        <hr>
+        <p style="text-align: center; color: #999;">© 2026 盲水印工具 | 版本 1.0</p>
+    </div>
+</body>
+</html>

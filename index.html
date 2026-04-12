@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>盲水印工具 - 批量添加与验证</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231677ff'/%3E%3Cpath fill='white' d='M30,30 L70,30 L70,70 L30,70 Z' stroke='white' stroke-width='2' fill='none'/%3E%3Ccircle cx='50' cy='50' r='10' fill='white'/%3E%3Ctext x='50' y='85' text-anchor='middle' fill='white' font-size='12' font-family='Arial'%3EWM%3C/text%3E%3C/svg%3E">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 头部样式 */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 30px;
+            border-radius: 60px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo-text {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        /* 顶部工具栏 */
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .help-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .help-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* 主要内容区 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.8s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 70px rgba(0,0,0,0.4);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .card-title .icon {
+            font-size: 28px;
+        }
+
+        /* 上传区域 */
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f5f5ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #ede8ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* 文件列表 */
+        .file-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 14px;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .remove-file:hover {
+            background: #ffebee;
+            transform: scale(1.1);
+        }
+
+        /* 水印输入区 */
+        .watermark-input {
+            margin-bottom: 20px;
+        }
+
+        .watermark-input label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .watermark-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+
+        .watermark-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 进度条 */
+        .progress-section {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* 结果区域 */
+        .results-section {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+
+        .result-item.success {
+            border-left-color: #28a745;
+        }
+
+        .result-item.error {
+            border-left-color: #dc3545;
+        }
+
+        .result-item.info {
+            border-left-color: #17a2b8;
+        }
+
+        .result-filename {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .result-message {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .result-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .result-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 批量操作栏 */
+        .batch-actions {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* 底部信息栏 */
+        .footer {
+            margin-top: 25px;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80%;
+            border-radius: 20px;
+            overflow: hidden;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-modal:hover {
+            opacity: 0.8;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        /* 动画 */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 统计信息 */
+        .stats {
+            display: inline-flex;
+            gap: 20px;
+            margin-left: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo-text {
+                font-size: 24px;
+            }
+            
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部工具栏 -->
+        <div class="top-bar">
+            <button class="help-btn" id="helpBtn">
+                <span>❓</span>
+                <span>使用说明</span>
+            </button>
+        </div>
+
+        <!-- 头部 -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">🔒</div>
+                <div class="logo-text">盲水印工具</div>
+            </div>
+            <div class="subtitle">Blind Watermark Tool - 批量添加与验证 | 支持中文水印 | 无损保存 | 水印可视化</div>
+        </div>
+
+        <div class="main-content">
+            <!-- 左侧：图片上传区 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">📸</span>
+                    <span>图片上传</span>
+                    <div class="stats" id="stats">已选择 0 张图片</div>
+                </div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">点击或拖拽图片到此区域上传</div>
+                    <div class="upload-text" style="font-size: 12px; margin-top: 5px;">支持 JPG、PNG 格式，可批量选择</div>
+                </div>
+                <input type="file" id="fileInput" class="file-input" multiple accept="image/jpeg,image/jpg,image/png">
+                
+                <div class="file-list" id="fileList"></div>
+                
+                <div class="batch-actions">
+                    <button class="btn btn-secondary" id="clearAllBtn">🗑️ 清空全部</button>
+                </div>
+            </div>
+
+            <!-- 右侧：水印设置区 -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">✏️</span>
+                    <span>水印设置</span>
+                </div>
+                
+                <div class="watermark-input">
+                    <label>水印内容（支持中文、英文、长文本）</label>
+                    <textarea id="watermarkText" class="watermark-textarea" rows="4" placeholder="请输入要添加的水印内容..."></textarea>
+                </div>
+                
+                <div>
+                    <button class="btn btn-primary" id="addWatermarkBtn">➕ 添加水印</button>
+                    <button class="btn btn-success" id="verifyWatermarkBtn">🔍 验证水印</button>
+                    <button class="btn btn-info" id="visualizeWatermarkBtn">🎨 水印可视化</button>
+                    <button class="btn btn-danger" id="clearResultsBtn">🗑️ 清空结果</button>
+                </div>
+                
+                <div class="progress-section" id="progressSection">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果展示区 -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">📊</span>
+                <span>处理结果</span>
+                <div class="stats" id="resultStats"></div>
+            </div>
+            <div class="results-section" id="resultsSection">
+                <div style="text-align: center; color: #999; padding: 40px;">
+                    等待处理...
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息栏 -->
+        <div class="footer">
+            <span>© 2026 盲水印工具 | 版本 1.0 | </span>
+            <a href="#" id="helpLink">📖 查看使用说明</a>
+        </div>
+    </div>
+
+    <!-- 使用说明模态框 -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📖 盲水印工具 - 使用说明</h2>
+                <button class="close-modal" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>✨ 主要功能</h3>
+                <ul>
+                    <li>✅ 批量添加盲水印</li>
+                    <li>✅ 批量验证盲水印</li>
+                    <li>✅ 水印可视化（半透明背景叠加）</li>
+                    <li>✅ 支持中文水印内容</li>
+                    <li>✅ 支持长文本自动换行</li>
+                    <li>✅ 无损PNG格式保存</li>
+                    <li>✅ 可视化处理结果</li>
+                </ul>
+
+                <h3>🚀 快速开始</h3>
+                <ol>
+                    <li><strong>上传图片</strong> - 点击上传区域或拖拽图片到页面</li>
+                    <li><strong>输入水印</strong> - 在右侧文本框输入水印内容</li>
+                    <li><strong>执行操作</strong> - 点击"添加水印"、"验证水印"或"水印可视化"按钮</li>
+                    <li><strong>下载结果</strong> - 点击结果中的下载链接保存图片</li>
+                </ol>
+
+                <h3>🎨 水印可视化功能说明</h3>
+                <ul>
+                    <li>自动提取图片中的水印内容</li>
+                    <li>根据图片宽度自动换行显示长文本</li>
+                    <li>在半透明背景上绘制水印文本，叠加到原图像上</li>
+                    <li>水印内容清晰可见而不完全遮挡原图</li>
+                    <li>支持中文显示（自动使用系统字体）</li>
+                </ul>
+
+                <h3>⚠️ 注意事项</h3>
+                <ul>
+                    <li>输出文件为PNG格式，请勿转换格式以免水印丢失</li>
+                    <li>图片尺寸越大，可嵌入的水印内容越多</li>
+                    <li>本工具只能检测本工具添加的水印</li>
+                    <li>所有处理在浏览器本地完成，图片不会上传到服务器</li>
+                    <li>建议单次批量处理不超过50张图片</li>
+                </ul>
+
+                <h3>❓ 常见问题</h3>
+                <p><strong>Q: 为什么验证时提示没有水印？</strong><br>
+                A: 请确保验证的图片是本工具添加水印后保存的PNG文件，且未被修改。</p>
+
+                <p><strong>Q: 可以添加多长的水印？</strong><br>
+                A: 取决于图片尺寸。512x512的图片约可存储8000个字符。</p>
+
+                <p><strong>Q: 程序会上传我的图片吗？</strong><br>
+                A: 不会！所有处理都在您的浏览器本地完成，请放心使用。</p>
+
+                <p><strong>Q: 水印可视化支持中文吗？</strong><br>
+                A: 支持。系统会自动检测并使用系统中的中文字体。</p>
+
+                <h3>📁 文件说明</h3>
+                <ul>
+                    <li><code>index.html</code> - 主程序界面</li>
+                    <li><code>start_server.bat</code> - Windows启动脚本</li>
+                    <li><code>README.html</code> - 详细使用说明</li>
+                    <li><code>安装使用说明.txt</code> - 文本版说明</li>
+                </ul>
+
+                <p style="text-align: center; margin-top: 20px; color: #999;">
+                    <a href="README.html" target="_blank">📄 查看完整使用说明</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let selectedFiles = [];
+        let processingResults = [];
+        
+        // DOM 元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const watermarkText = document.getElementById('watermarkText');
+        const addWatermarkBtn = document.getElementById('addWatermarkBtn');
+        const verifyWatermarkBtn = document.getElementById('verifyWatermarkBtn');
+        const visualizeWatermarkBtn = document.getElementById('visualizeWatermarkBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const clearResultsBtn = document.getElementById('clearResultsBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const stats = document.getElementById('stats');
+        const progressSection = document.getElementById('progressSection');
+        const progressFill = document.getElementById('progressFill');
+        const resultStats = document.getElementById('resultStats');
+        
+        // 模态框元素
+        const helpModal = document.getElementById('helpModal');
+        const helpBtn = document.getElementById('helpBtn');
+        const helpLink = document.getElementById('helpLink');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        
+        // ==================== 水印可视化函数 ====================
+        
+        /**
+         * 将长文本按指定宽度自动换行
+         * @param {string} text - 原始文本
+         * @param {CanvasRenderingContext2D} ctx - Canvas上下文
+         * @param {number} maxWidth - 最大宽度（像素）
+         * @param {number} fontSize - 字体大小
+         * @returns {string[]} 换行后的文本行数组
+         */
+        function wrapText(text, ctx, maxWidth, fontSize) {
+            if (!text || text.length === 0) return [];
+            
+            const lines = [];
+            let currentLine = "";
+            
+            // 设置字体用于测量
+            ctx.font = `${fontSize}px "Microsoft YaHei", "SimHei", "PingFang SC", "Noto Sans CJK SC", sans-serif`;
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const testLine = currentLine + char;
+                const metrics = ctx.measureText(testLine);
+                const testWidth = metrics.width;
+                
+                if (testWidth > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine);
+                    currentLine = char;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            
+            if (currentLine.length > 0) {
+                lines.push(currentLine);
+            }
+            
+            return lines;
+        }
+        
+        /**
+         * 计算文本总高度
+         * @param {number} lineCount - 行数
+         * @param {number} fontSize - 字体大小
+         * @param {number} lineSpacing - 行间距
+         * @returns {number} 总高度
+         */
+        function calculateTextHeight(lineCount, fontSize, lineSpacing) {
+            return lineCount * (fontSize + lineSpacing) + 20; // 20px为上下内边距
+        }
+        
+        /**
+         * 绘制半透明背景
+         * @param {CanvasRenderingContext2D} ctx - Canvas上下文
+         * @param {number} x - X坐标
+         * @param {number} y - Y坐标
+         * @param {number} width - 宽度
+         * @param {number} height - 高度
+         * @param {number} alpha - 透明度 (0-1)
+         */
+        function drawSemiTransparentBackground(ctx, x, y, width, height, alpha) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(x, y, width, height);
+            ctx.restore();
+        }
+        
+        /**
+         * 水印可视化：提取水印并以半透明背景叠加方式显示
+         * @param {File} imageFile - 图片文件
+         * @returns {Promise<{blob: Blob, fileName: string, downloadUrl: string, watermarkText: string}>}
+         */
+        async function visualizeWatermark(imageFile) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(imageFile);
+                
+                img.onload = () => {
+                    // 提取水印
+                    const extractedText = extractWatermarkFromImage(img);
+                    
+                    // 创建Canvas进行可视化
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 1. 绘制原图
+                    ctx.drawImage(img, 0, 0);
+                    
+                    if (extractedText && extractedText.length > 0) {
+                        // 2. 配置文本样式
+                        const fontSize = Math.max(16, Math.min(32, Math.floor(img.width / 30)));
+                        const lineSpacing = 8;
+                        const padding = 20;
+                        const maxTextWidth = img.width - 2 * padding;
+                        
+                        // 3. 文本换行处理
+                        const lines = wrapText(extractedText, ctx, maxTextWidth, fontSize);
+                        const textHeight = calculateTextHeight(lines.length, fontSize, lineSpacing);
+                        
+                        // 4. 绘制半透明背景（黑色，透明度0.7）
+                        const bgX = 10;
+                        const bgY = 10;
+                        const bgWidth = img.width - 20;
+                        const bgHeight = textHeight + 10;
+                        drawSemiTransparentBackground(ctx, bgX, bgY, bgWidth, bgHeight, 0.7);
+                        
+                        // 5. 绘制水印文本（白色）
+                        ctx.font = `${fontSize}px "Microsoft YaHei", "SimHei", "PingFang SC", "Noto Sans CJK SC", sans-serif`;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.textBaseline = 'top';
+                        
+                        let currentY = bgY + 15;
+                        for (let i = 0; i < lines.length; i++) {
+                            ctx.fillText(lines[i], bgX + 15, currentY);
+                            currentY += fontSize + lineSpacing;
+                        }
+                        
+                    } else {
+                        // 未检测到水印
+                        const fontSize = 20;
+                        ctx.font = `${fontSize}px "Microsoft YaHei", "SimHei", "PingFang SC", sans-serif`;
+                        ctx.fillStyle = '#ff0000';
+                        ctx.shadowColor = 'black';
+                        ctx.shadowBlur = 2;
+                        ctx.fillText('未检测到水印', 20, 40);
+                        ctx.shadowColor = 'transparent';
+                    }
+                    
+                    // 导出为PNG
+                    canvas.toBlob(blob => {
+                        URL.revokeObjectURL(url);
+                        const fileName = imageFile.name.replace(/\.(jpg|jpeg|png)$/i, '_水印可视.png');
+                        const downloadUrl = URL.createObjectURL(blob);
+                        resolve({ blob, fileName, downloadUrl, watermarkText: extractedText });
+                    }, 'image/png');
+                };
+                
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('图片加载失败'));
+                };
+                
+                img.src = url;
+            });
+        }
+        
+        /**
+         * 从图像中提取水印（辅助函数）
+         * @param {HTMLImageElement} img - 图像元素
+         * @returns {string} 提取的水印文本
+         */
+        function extractWatermarkFromImage(img) {
+            // 创建临时Canvas提取像素数据
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // 提取最低位比特流
+            const bits = [];
+            for (let i = 0; i < data.length && bits.length < 100000; i++) {
+                if ((i + 1) % 4 !== 0) { // 跳过Alpha通道
+                    bits.push(data[i] & 1);
+                }
+            }
+            
+            // 搜索起始标志（16个连续的1）
+            let startPos = -1;
+            for (let i = 0; i <= bits.length - 16; i++) {
+                let isStart = true;
+                for (let j = 0; j < 16; j++) {
+                    if (bits[i + j] !== 1) {
+                        isStart = false;
+                        break;
+                    }
+                }
+                if (isStart) {
+                    startPos = i + 16;
+                    break;
+                }
+            }
+            
+            if (startPos === -1) {
+                return '';
+            }
+            
+            // 提取字节
+            const bytes = [];
+            let i = startPos;
+            while (i + 8 <= bits.length) {
+                // 检查结束标志（16个连续的0）
+                let isEnd = true;
+                for (let j = 0; j < 16 && i + j < bits.length; j++) {
+                    if (bits[i + j] !== 0) {
+                        isEnd = false;
+                        break;
+                    }
+                }
+                if (isEnd) break;
+                
+                // 读取一个字节
+                let byte = 0;
+                for (let j = 0; j < 8; j++) {
+                    byte = (byte << 1) | bits[i + j];
+                }
+                bytes.push(byte);
+                i += 8;
+            }
+            
+            // UTF-8解码
+            try {
+                const decoder = new TextDecoder('utf-8');
+                const text = decoder.decode(new Uint8Array(bytes));
+                return text;
+            } catch (e) {
+                return '';
+            }
+        }
+        
+        // ==================== LSB水印嵌入与提取 ====================
+        
+        async function embedWatermark(imageFile, watermarkText) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(imageFile);
+                
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    const textBytes = new TextEncoder().encode(watermarkText);
+                    const binary = [];
+                    
+                    for (let i = 0; i < 16; i++) binary.push(1);
+                    
+                    for (let byte of textBytes) {
+                        for (let i = 7; i >= 0; i--) {
+                            binary.push((byte >> i) & 1);
+                        }
+                    }
+                    
+                    for (let i = 0; i < 16; i++) binary.push(0);
+                    
+                    let bitIndex = 0;
+                    for (let i = 0; i < data.length && bitIndex < binary.length; i++) {
+                        if ((i + 1) % 4 !== 0) {
+                            data[i] = (data[i] & 0xFE) | binary[bitIndex];
+                            bitIndex++;
+                        }
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    canvas.toBlob(blob => {
+                        URL.revokeObjectURL(url);
+                        const fileName = imageFile.name.replace(/\.(jpg|jpeg|png)$/i, '_有水印.png');
+                        const downloadUrl = URL.createObjectURL(blob);
+                        resolve({ blob, fileName, downloadUrl });
+                    }, 'image/png');
+                };
+                
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('图片加载失败'));
+                };
+                
+                img.src = url;
+            });
+        }
+        
+        async function extractWatermark(imageFile) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(imageFile);
+                
+                img.onload = () => {
+                    const extractedText = extractWatermarkFromImage(img);
+                    URL.revokeObjectURL(url);
+                    resolve(extractedText);
+                };
+                
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('图片加载失败'));
+                };
+                
+                img.src = url;
+            });
+        }
+        
+        // ==================== UI交互函数 ====================
+        
+        function updateStats() {
+            stats.textContent = `已选择 ${selectedFiles.length} 张图片`;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        function updateFileList() {
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无图片</div>';
+                updateStats();
+                return;
+            }
+            
+            fileList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div class="file-info">
+                        <span>🖼️</span>
+                        <div>
+                            <div class="file-name">${escapeHtml(file.name)}</div>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                        </div>
+                    </div>
+                    <button class="remove-file" onclick="removeFile(${index})">✕</button>
+                </div>
+            `).join('');
+            
+            updateStats();
+        }
+        
+        window.removeFile = function(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        };
+        
+        function clearAllFiles() {
+            selectedFiles = [];
+            updateFileList();
+            fileInput.value = '';
+        }
+        
+        function clearResults() {
+            processingResults = [];
+            updateResultsDisplay();
+        }
+        
+        function addResult(filename, message, type, downloadUrl = null) {
+            processingResults.unshift({
+                filename,
+                message,
+                type,
+                downloadUrl,
+                timestamp: new Date()
+            });
+            
+            if (processingResults.length > 100) {
+                processingResults.pop();
+            }
+            
+            updateResultsDisplay();
+        }
+        
+        function updateResultsDisplay() {
+            if (processingResults.length === 0) {
+                resultsSection.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">等待处理...</div>';
+                resultStats.textContent = '';
+                return;
+            }
+            
+            const successCount = processingResults.filter(r => r.type === 'success').length;
+            const errorCount = processingResults.filter(r => r.type === 'error').length;
+            resultStats.textContent = `成功: ${successCount} | 失败: ${errorCount} | 总计: ${processingResults.length}`;
+            
+            resultsSection.innerHTML = processingResults.map(result => `
+                <div class="result-item ${result.type}">
+                    <div class="result-filename">📷 ${escapeHtml(result.filename)}</div>
+                    <div class="result-message">${escapeHtml(result.message)}</div>
+                    ${result.downloadUrl ? `<a href="${result.downloadUrl}" class="result-link" download>💾 点击下载</a>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        async function batchProcess(action) {
+            if (selectedFiles.length === 0) {
+                addResult('', '请先选择图片文件', 'error');
+                return;
+            }
+            
+            if (action === 'add' && !watermarkText.value.trim()) {
+                addResult('', '请输入水印内容', 'error');
+                return;
+            }
+            
+            progressSection.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressFill.textContent = '0%';
+            
+            let processed = 0;
+            const total = selectedFiles.length;
+            
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                
+                try {
+                    if (action === 'add') {
+                        const result = await embedWatermark(file, watermarkText.value.trim());
+                        addResult(
+                            file.name,
+                            `✅ 水印添加成功！水印内容："${watermarkText.value.trim()}"`,
+                            'success',
+                            result.downloadUrl
+                        );
+                    } else if (action === 'verify') {
+                        const extractedText = await extractWatermark(file);
+                        if (extractedText) {
+                            addResult(
+                                file.name,
+                                `🔍 检测到水印！内容："${extractedText}"`,
+                                'success'
+                            );
+                        } else {
+                            addResult(
+                                file.name,
+                                `⚠️ 未检测到水印`,
+                                'info'
+                            );
+                        }
+                    } else if (action === 'visualize') {
+                        const result = await visualizeWatermark(file);
+                        if (result.watermarkText) {
+                            addResult(
+                                file.name,
+                                `🎨 水印可视化成功！提取内容："${result.watermarkText}"（半透明背景叠加显示）`,
+                                'success',
+                                result.downloadUrl
+                            );
+                        } else {
+                            addResult(
+                                file.name,
+                                `⚠️ 未检测到水印，无法可视化`,
+                                'info'
+                            );
+                        }
+                    }
+                } catch (error) {
+                    addResult(
+                        file.name,
+                        `❌ 处理失败：${error.message}`,
+                        'error'
+                    );
+                }
+                
+                processed++;
+                const percent = (processed / total * 100).toFixed(0);
+                progressFill.style.width = `${percent}%`;
+                progressFill.textContent = `${percent}%`;
+            }
+            
+            setTimeout(() => {
+                progressSection.style.display = 'none';
+                progressFill.style.width = '0%';
+            }, 1000);
+            
+            const actionNames = { add: '添加', verify: '验证', visualize: '可视化' };
+            addResult('', `批量${actionNames[action]}完成！共处理 ${total} 张图片`, 'info');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function openHelp() {
+            helpModal.style.display = 'block';
+        }
+        
+        function closeHelp() {
+            helpModal.style.display = 'none';
+        }
+        
+        window.onclick = function(event) {
+            if (event.target === helpModal) {
+                closeHelp();
+            }
+        }
+        
+        // 事件监听
+        helpBtn.addEventListener('click', openHelp);
+        helpLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            openHelp();
+        });
+        closeModalBtn.addEventListener('click', closeHelp);
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => 
+                f.type === 'image/jpeg' || f.type === 'image/jpg' || f.type === 'image/png'
+            );
+            selectedFiles.push(...files);
+            updateFileList();
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            selectedFiles.push(...files);
+            updateFileList();
+        });
+        
+        addWatermarkBtn.addEventListener('click', () => batchProcess('add'));
+        verifyWatermarkBtn.addEventListener('click', () => batchProcess('verify'));
+        visualizeWatermarkBtn.addEventListener('click', () => batchProcess('visualize'));
+        clearAllBtn.addEventListener('click', clearAllFiles);
+        clearResultsBtn.addEventListener('click', clearResults);
+        
+        // 初始化
+        updateFileList();
+        
+        console.log('盲水印工具已启动 - Web版本（含可视化功能）');
+    </script>
+</body>
+</html>
