@@ -673,14 +673,13 @@
                     <li>✅ 支持中文水印内容</li>
                     <li>✅ 支持长文本自动换行</li>
                     <li>✅ 无损PNG格式保存</li>
-                    <li>✅ 可视化处理结果</li>
                 </ul>
 
                 <h3>🚀 快速开始</h3>
                 <ol>
                     <li><strong>上传图片</strong> - 点击上传区域或拖拽图片到页面</li>
                     <li><strong>输入水印</strong> - 在右侧文本框输入水印内容</li>
-                    <li><strong>执行操作</strong> - 点击"添加水印"、"验证水印"或"水印可视化"按钮</li>
+                    <li><strong>执行操作</strong> - 点击“添加水印”、“验证水印”或“水印可视化”按钮</li>
                     <li><strong>下载结果</strong> - 点击结果中的下载链接保存图片</li>
                 </ol>
 
@@ -714,28 +713,16 @@
 
                 <p><strong>Q: 水印可视化支持中文吗？</strong><br>
                 A: 支持。系统会自动检测并使用系统中的中文字体。</p>
-
-                <h3>📁 文件说明</h3>
-                <ul>
-                    <li><code>index.html</code> - 主程序界面</li>
-                    <li><code>start_server.bat</code> - Windows启动脚本</li>
-                    <li><code>README.html</code> - 详细使用说明</li>
-                    <li><code>安装使用说明.txt</code> - 文本版说明</li>
-                </ul>
-
-                <p style="text-align: center; margin-top: 20px; color: #999;">
-                    <a href="README.html" target="_blank">📄 查看完整使用说明</a>
-                </p>
             </div>
         </div>
     </div>
 
     <script>
-        // 全局变量
+        // ==================== 全局变量 ====================
         let selectedFiles = [];
         let processingResults = [];
         
-        // DOM 元素
+        // ==================== DOM 元素 ====================
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const fileList = document.getElementById('fileList');
@@ -773,7 +760,6 @@
             const lines = [];
             let currentLine = "";
             
-            // 设置字体用于测量
             ctx.font = `${fontSize}px "Microsoft YaHei", "SimHei", "PingFang SC", "Noto Sans CJK SC", sans-serif`;
             
             for (let i = 0; i < text.length; i++) {
@@ -798,121 +784,11 @@
         }
         
         /**
-         * 计算文本总高度
-         * @param {number} lineCount - 行数
-         * @param {number} fontSize - 字体大小
-         * @param {number} lineSpacing - 行间距
-         * @returns {number} 总高度
-         */
-        function calculateTextHeight(lineCount, fontSize, lineSpacing) {
-            return lineCount * (fontSize + lineSpacing) + 20; // 20px为上下内边距
-        }
-        
-        /**
-         * 绘制半透明背景
-         * @param {CanvasRenderingContext2D} ctx - Canvas上下文
-         * @param {number} x - X坐标
-         * @param {number} y - Y坐标
-         * @param {number} width - 宽度
-         * @param {number} height - 高度
-         * @param {number} alpha - 透明度 (0-1)
-         */
-        function drawSemiTransparentBackground(ctx, x, y, width, height, alpha) {
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(x, y, width, height);
-            ctx.restore();
-        }
-        
-        /**
-         * 水印可视化：提取水印并以半透明背景叠加方式显示
-         * @param {File} imageFile - 图片文件
-         * @returns {Promise<{blob: Blob, fileName: string, downloadUrl: string, watermarkText: string}>}
-         */
-        async function visualizeWatermark(imageFile) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                const url = URL.createObjectURL(imageFile);
-                
-                img.onload = () => {
-                    // 提取水印
-                    const extractedText = extractWatermarkFromImage(img);
-                    
-                    // 创建Canvas进行可视化
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    
-                    // 1. 绘制原图
-                    ctx.drawImage(img, 0, 0);
-                    
-                    if (extractedText && extractedText.length > 0) {
-                        // 2. 配置文本样式
-                        const fontSize = Math.max(16, Math.min(32, Math.floor(img.width / 30)));
-                        const lineSpacing = 8;
-                        const padding = 20;
-                        const maxTextWidth = img.width - 2 * padding;
-                        
-                        // 3. 文本换行处理
-                        const lines = wrapText(extractedText, ctx, maxTextWidth, fontSize);
-                        const textHeight = calculateTextHeight(lines.length, fontSize, lineSpacing);
-                        
-                        // 4. 绘制半透明背景（黑色，透明度0.7）
-                        const bgX = 10;
-                        const bgY = 10;
-                        const bgWidth = img.width - 20;
-                        const bgHeight = textHeight + 10;
-                        drawSemiTransparentBackground(ctx, bgX, bgY, bgWidth, bgHeight, 0.7);
-                        
-                        // 5. 绘制水印文本（白色）
-                        ctx.font = `${fontSize}px "Microsoft YaHei", "SimHei", "PingFang SC", "Noto Sans CJK SC", sans-serif`;
-                        ctx.fillStyle = '#ffffff';
-                        ctx.textBaseline = 'top';
-                        
-                        let currentY = bgY + 15;
-                        for (let i = 0; i < lines.length; i++) {
-                            ctx.fillText(lines[i], bgX + 15, currentY);
-                            currentY += fontSize + lineSpacing;
-                        }
-                        
-                    } else {
-                        // 未检测到水印
-                        const fontSize = 20;
-                        ctx.font = `${fontSize}px "Microsoft YaHei", "SimHei", "PingFang SC", sans-serif`;
-                        ctx.fillStyle = '#ff0000';
-                        ctx.shadowColor = 'black';
-                        ctx.shadowBlur = 2;
-                        ctx.fillText('未检测到水印', 20, 40);
-                        ctx.shadowColor = 'transparent';
-                    }
-                    
-                    // 导出为PNG
-                    canvas.toBlob(blob => {
-                        URL.revokeObjectURL(url);
-                        const fileName = imageFile.name.replace(/\.(jpg|jpeg|png)$/i, '_水印可视.png');
-                        const downloadUrl = URL.createObjectURL(blob);
-                        resolve({ blob, fileName, downloadUrl, watermarkText: extractedText });
-                    }, 'image/png');
-                };
-                
-                img.onerror = () => {
-                    URL.revokeObjectURL(url);
-                    reject(new Error('图片加载失败'));
-                };
-                
-                img.src = url;
-            });
-        }
-        
-        /**
          * 从图像中提取水印（辅助函数）
          * @param {HTMLImageElement} img - 图像元素
          * @returns {string} 提取的水印文本
          */
         function extractWatermarkFromImage(img) {
-            // 创建临时Canvas提取像素数据
             const canvas = document.createElement('canvas');
             canvas.width = img.width;
             canvas.height = img.height;
@@ -922,15 +798,13 @@
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
             
-            // 提取最低位比特流
             const bits = [];
             for (let i = 0; i < data.length && bits.length < 100000; i++) {
-                if ((i + 1) % 4 !== 0) { // 跳过Alpha通道
+                if ((i + 1) % 4 !== 0) {
                     bits.push(data[i] & 1);
                 }
             }
             
-            // 搜索起始标志（16个连续的1）
             let startPos = -1;
             for (let i = 0; i <= bits.length - 16; i++) {
                 let isStart = true;
@@ -950,11 +824,9 @@
                 return '';
             }
             
-            // 提取字节
             const bytes = [];
             let i = startPos;
             while (i + 8 <= bits.length) {
-                // 检查结束标志（16个连续的0）
                 let isEnd = true;
                 for (let j = 0; j < 16 && i + j < bits.length; j++) {
                     if (bits[i + j] !== 0) {
@@ -964,7 +836,6 @@
                 }
                 if (isEnd) break;
                 
-                // 读取一个字节
                 let byte = 0;
                 for (let j = 0; j < 8; j++) {
                     byte = (byte << 1) | bits[i + j];
@@ -973,14 +844,91 @@
                 i += 8;
             }
             
-            // UTF-8解码
             try {
-                const decoder = new TextDecoder('utf-8');
-                const text = decoder.decode(new Uint8Array(bytes));
+                const text = new TextDecoder('utf-8').decode(new Uint8Array(bytes));
                 return text;
             } catch (e) {
                 return '';
             }
+        }
+        
+        /**
+         * 水印可视化：提取水印并以半透明背景叠加方式显示
+         * @param {File} imageFile - 图片文件
+         * @returns {Promise<{blob: Blob, fileName: string, downloadUrl: string, watermarkText: string}>}
+         */
+        async function visualizeWatermark(imageFile) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(imageFile);
+                
+                img.onload = () => {
+                    const extractedText = extractWatermarkFromImage(img);
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    ctx.drawImage(img, 0, 0);
+                    
+                    if (extractedText && extractedText.length > 0) {
+                        const fontSize = Math.max(16, Math.min(32, Math.floor(img.width / 30)));
+                        const lineSpacing = 8;
+                        const padding = 20;
+                        const maxTextWidth = img.width - 2 * padding;
+                        
+                        const lines = wrapText(extractedText, ctx, maxTextWidth, fontSize);
+                        
+                        const bgX = 10;
+                        const bgY = 10;
+                        const bgWidth = img.width - 20;
+                        const bgHeight = lines.length * (fontSize + lineSpacing) + 30;
+                        
+                        ctx.globalAlpha = 0.7;
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+                        
+                        ctx.globalAlpha = 1.0;
+                        ctx.font = `${fontSize}px "Microsoft YaHei", "SimHei", "PingFang SC", sans-serif`;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.textBaseline = 'top';
+                        
+                        let currentY = bgY + 15;
+                        for (let i = 0; i < lines.length; i++) {
+                            ctx.fillText(lines[i], bgX + 15, currentY);
+                            currentY += fontSize + lineSpacing;
+                        }
+                        
+                        const titleFontSize = Math.max(12, fontSize - 4);
+                        ctx.font = `${titleFontSize}px "Microsoft YaHei", "SimHei", sans-serif`;
+                        ctx.fillStyle = '#cccccc';
+                        ctx.fillText(`水印内容 (共${extractedText.length}字符):`, bgX + 15, bgY + 5);
+                    } else {
+                        const fontSize = 20;
+                        ctx.font = `${fontSize}px "Microsoft YaHei", "SimHei", sans-serif`;
+                        ctx.fillStyle = '#ff0000';
+                        ctx.shadowColor = 'black';
+                        ctx.shadowBlur = 2;
+                        ctx.fillText('未检测到水印', 20, 40);
+                        ctx.shadowColor = 'transparent';
+                    }
+                    
+                    canvas.toBlob(blob => {
+                        URL.revokeObjectURL(url);
+                        const fileName = imageFile.name.replace(/\.(jpg|jpeg|png)$/i, '_水印可视.png');
+                        const downloadUrl = URL.createObjectURL(blob);
+                        resolve({ blob, fileName, downloadUrl, watermarkText: extractedText });
+                    }, 'image/png');
+                };
+                
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('图片加载失败'));
+                };
+                
+                img.src = url;
+            });
         }
         
         // ==================== LSB水印嵌入与提取 ====================
@@ -1252,7 +1200,7 @@
             }
         }
         
-        // 事件监听
+        // ==================== 事件监听 ====================
         helpBtn.addEventListener('click', openHelp);
         helpLink.addEventListener('click', (e) => {
             e.preventDefault();
